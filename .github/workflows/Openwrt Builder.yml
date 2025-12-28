@@ -1,4 +1,4 @@
-
+#
 # Openwrt with passwall and openclash
 
 name: Openwrt Builder
@@ -6,8 +6,6 @@ name: Openwrt Builder
 on:
   repository_dispatch:
   workflow_dispatch:
-  #schedule:
-    #- cron: 0 10 * * 5
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
@@ -23,11 +21,11 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Initialization environment
       env:
@@ -94,7 +92,7 @@ jobs:
         echo "fixed rust host build error"
         sed -i 's/--set=llvm\.download-ci-llvm=false/--set=llvm.download-ci-llvm=true/' feeds/packages/lang/rust/Makefile
         grep -q -- '--ci false \\' feeds/packages/lang/rust/Makefile || sed -i '/x\.py \\/a \        --ci false \\' feeds/packages/lang/rust/Makefile
-         
+          
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
@@ -175,11 +173,11 @@ jobs:
         retain_days: 0
         keep_minimum_runs: 2
 
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@master
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 3
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #- name: Remove old Releases
+      #uses: dev-drprasad/delete-older-releases@master
+      #if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      #with:
+        #keep_latest: 3
+        #delete_tags: true
+      #env:
+        #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
