@@ -27,7 +27,7 @@ jobs:
       actions: write
     steps:
     - name: Checkout
-      uses: actions/checkout@v10
+      uses: actions/checkout@v5
       
     - name: Initialization environment
       env:
