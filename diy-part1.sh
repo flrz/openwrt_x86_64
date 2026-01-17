@@ -14,7 +14,7 @@
 #sed -i "/helloworld/d" "feeds.conf.default"
 
 # Add a feed source
-#sed -i '1i src-git flrz https://github.com/flrz/openwrt-packages' feeds.conf.default
-#sed -i '2i src-git openclash https://github.com/vernesong/OpenClash' feeds.conf.default
-sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
+sed -i '1i src-git flrz https://github.com/flrz/openwrt-packages' feeds.conf.default
+sed -i '2i src-git openclash https://github.com/vernesong/OpenClash' feeds.conf.default
+#sed -i '1i src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
 #sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default
