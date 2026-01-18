@@ -1,5 +1,5 @@
 src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages.git;main
-src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git;main
+src-git passwall2_luci https://github.com/xiaorouji/openwrt-passwall2.git;main
 src-git packages https://git.openwrt.org/feed/packages.git^b2ddc4a614a7a972715440b483020d3129fc059a
 src-git luci https://git.openwrt.org/project/luci.git^6984d4d2a23ad87e1d76a5225f95f09b49c17184
 src-git routing https://git.openwrt.org/feed/routing.git^b43e4ac560ccbafba21dc3ab0dbe57afc07e7b88
