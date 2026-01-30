@@ -1,3 +1,4 @@
+
 #
 # Openwrt with passwall and openclash
 
@@ -33,6 +34,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        docker image prune -f
         sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android
         sudo docker image prune -f
         sudo -E apt-get -qq update
