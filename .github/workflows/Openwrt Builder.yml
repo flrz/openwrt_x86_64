@@ -84,9 +84,9 @@ jobs:
 
         rm -rf temp_resp
         git clone -b master --single-branch https://github.com/openwrt/packages.git temp_resp
-        echo "update golang version"
-        rm -rf feeds/packages/lang/golang
-        cp -r temp_resp/lang/golang feeds/packages/lang
+        # echo "update golang version"
+        # rm -rf feeds/packages/lang/golang
+        # cp -r temp_resp/lang/golang feeds/packages/lang
         echo "update rust version"
         rm -rf feeds/packages/lang/rust
         cp -r temp_resp/lang/rust feeds/packages/lang
