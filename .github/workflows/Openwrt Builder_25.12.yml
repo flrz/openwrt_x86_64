@@ -1,7 +1,7 @@
 #
 # Openwrt with passwall and openclash
 
-name: Openwrt Builder
+name: Openwrt Builder_25.12
 
 on:
   repository_dispatch:
@@ -21,7 +21,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
