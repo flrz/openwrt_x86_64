@@ -22,3 +22,5 @@ sed -i '2i src-git openclash https://github.com/vernesong/OpenClash' feeds.conf.
 #sed -i '2i src-git small https://github.com/kenzok8/small' feeds.conf.default
 #sed -i '3i src-git golang https://github.com/sbwml/packages_lang_golang -b 26.x feeds/packages/lang/golang' feeds.conf.default
 #sed -i '3i src-git openwrt-passwall-packages https://github.com/flrz/openwrt-passwall-packages' feeds.conf.default
+sed -i '3i src-git passwall_packages https://github.com/ffff3333/packages' feeds.conf.default
+sed -i '4i src-git passwall_luci https://github.com/Openwrt-Passwall/openwrt-passwall' feeds.conf.default
