@@ -10,12 +10,12 @@
 # See /LICENSE for more information.
 #
 # 1. 删除当前 feeds 中的旧版 golang
-rm -rf feeds/packages/lang/golang
+#rm -rf feeds/packages/lang/golang
 # 2. 从 ImmortalWrt 仓库拉取最新的 golang 定义
-git clone https://github.com/immortalwrt/packages.git /tmp/immortalwrt_pkg
-cp -rf /tmp/immortalwrt_pkg/lang/golang feeds/packages/lang/golang
+#git clone https://github.com/immortalwrt/packages.git /tmp/immortalwrt_pkg
+#cp -rf /tmp/immortalwrt_pkg/lang/golang feeds/packages/lang/golang
 # 3. 清理临时文件
-rm -rf /tmp/immortalwrt_pkg
+#rm -rf /tmp/immortalwrt_pkg
 
 # Modify default IP
 sed -i 's/192.168.1.1/192.168.6.9/g' package/base-files/files/bin/config_generate
