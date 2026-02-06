@@ -77,6 +77,12 @@ jobs:
         cd openwrt
         ./scripts/feeds update -a
         
+        #替换golang
+        rm -rf feeds/packages/lang/golang
+        git clone https://github.com/immortalwrt/packages.git /tmp/immortalwrt_pkg
+        cp -rf /tmp/immortalwrt_pkg/lang/golang feeds/packages/lang/golang
+        rm -rf /tmp/immortalwrt_pkg
+        
     - name: Install feeds
       run: |
         cd openwrt
