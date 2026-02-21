@@ -72,12 +72,6 @@ jobs:
         cd openwrt
         ./scripts/feeds update -a
         
-        #替换golang
-        #rm -rf feeds/packages/lang/golang
-        #git clone https://github.com/immortalwrt/packages.git /tmp/immortalwrt_pkg
-        #cp -rf /tmp/immortalwrt_pkg/lang/golang feeds/packages/lang/golang
-        #rm -rf /tmp/immortalwrt_pkg
-        
     - name: Install feeds
       run: |
         cd openwrt
@@ -112,9 +106,6 @@ jobs:
         echo "fixed rust host build error"
         sed -i 's/--set=llvm\.download-ci-llvm=false/--set=llvm.download-ci-llvm=true/' feeds/packages/lang/rust/Makefile
         grep -q -- '--ci false \\' feeds/packages/lang/rust/Makefile || sed -i '/x\.py \\/a \        --ci false \\' feeds/packages/lang/rust/Makefile
-
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
 
         echo "Patch application completed"
         #--------------------------------------end_patches--------------------------------------------
