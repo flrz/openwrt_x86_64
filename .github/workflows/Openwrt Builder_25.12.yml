@@ -13,8 +13,8 @@ env:
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: openwrt-25.12
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: .config1
-  DIY_P1_SH: diy-part3.sh
+  CONFIG_FILE: .config
+  DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -23,10 +23,10 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       actions: write      
-      contents: read
+      contents: write
 
     steps:
     - name: Checkout
@@ -52,6 +52,14 @@ jobs:
         sudo -E timedatectl set-timezone "Asia/Shanghai"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
+
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        android: true
+        dotnet: true
+        haskell: true
         
     - name: Clone source code
       working-directory: /workdir
@@ -78,12 +86,12 @@ jobs:
         ./scripts/feeds install -a
 
         # 移除 openwrt feeds 自带的核心库
-        # rm -rf feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
-        # git clone https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/passwall-packages
+        #rm -rf feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
+        #git clone https://github.com/Openwrt-Passwall/openwrt-passwall-packages package/passwall-packages
 
         # 移除 openwrt feeds 过时的luci版本
-        # rm -rf feeds/luci/applications/luci-app-passwall
-        # git clone https://github.com/Openwrt-Passwall/openwrt-passwall package/passwall-luci
+        #rm -rf feeds/luci/applications/luci-app-passwall
+        #git clone https://github.com/Openwrt-Passwall/openwrt-passwall package/passwall-luci
 
         #--------------------------------------begin_patches------------------------------------------
         echo "Start applying the patch"
@@ -104,8 +112,11 @@ jobs:
         rm -rf temp_resp
 
         echo "fixed rust host build error"
-        sed -i 's/--set=llvm\.download-ci-llvm=false/--set=llvm.download-ci-llvm=true/' feeds/packages/lang/rust/Makefile
+        sed -i 's/--set=llvm\.download-ci-llvm=true/--set=llvm.download-ci-llvm=false/' feeds/packages/lang/rust/Makefile
         grep -q -- '--ci false \\' feeds/packages/lang/rust/Makefile || sed -i '/x\.py \\/a \        --ci false \\' feeds/packages/lang/rust/Makefile
+
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
 
         echo "Patch application completed"
         #--------------------------------------end_patches--------------------------------------------
@@ -138,6 +149,7 @@ jobs:
       id: compile
       run: |
         cd openwrt
+        export GOPROXY=https://proxy.golang.org,direct
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
