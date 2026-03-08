@@ -134,13 +134,14 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
-    - name: Pre-download Packages
+    - name: Download package
+      id: package
       run: |
         cd openwrt
-        echo "Pre-downloading packages..."
-        make download -j$(nproc) V=s
+        make defconfig
+        make download -j16
+        find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-        echo "Download complete"
 
     - name: Compile Firmware (Optimized)
       id: compile
