@@ -56,19 +56,21 @@ jobs:
         sudo chown $USER:$GROUPS /workdir
         echo "Build environment ready"
 
-    - name: Restore ccache
+    - name: Restore ccache Cache
       uses: actions/cache@v4
       with:
         path: ~/.ccache
-        key: ${{ runner.os }}-ccache-${{ github.ref_name }}-${{ github.sha }}
+        # Branch-specific cache key - all commits on same branch share it
+        key: ${{ runner.os }}-ccache-${{ github.ref_name }}
         restore-keys: |
-          ${{ runner.os }}-ccache-${{ github.ref_name }}-
+          ${{ runner.os }}-ccache-main
           ${{ runner.os }}-ccache-
 
-    - name: Restore dl folder
+    - name: Restore OpenWrt dl Folder
       uses: actions/cache@v4
       with:
         path: /workdir/openwrt/dl
+        # Based on feeds.conf.default - only changes when feeds change
         key: ${{ runner.os }}-dl-${{ hashFiles('feeds.conf.default') }}
         restore-keys: |
           ${{ runner.os }}-dl-
