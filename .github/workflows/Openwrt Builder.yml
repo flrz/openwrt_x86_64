@@ -111,8 +111,8 @@ jobs:
 
     - name: Global GitHub Proxy
       run: |
-         find feeds/ -name Makefile -exec sed -i 's|https://github.com|https://ghproxy.net/https://github.com|g' {} +
-         find package/ -name Makefile -exec sed -i 's|https://github.com|https://ghproxy.net/https://github.com|g' {} +
+        find feeds/ -name Makefile -exec sed -i 's|https://github.com|https://ghproxy.net/https://github.com|g' {} +
+        find package/ -name Makefile -exec sed -i 's|https://github.com|https://ghproxy.net/https://github.com|g' {} +
 
     - name: Apply 25.12 Patches
       run: |
