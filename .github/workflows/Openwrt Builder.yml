@@ -178,6 +178,7 @@ jobs:
       id: download
       run: |
         cd openwrt
+        make download V=s -j$(nproc) FIXUP=1
         echo "Pre-downloading packages (this may take 5-10 minutes)..."
         
         # Download with retry logic
