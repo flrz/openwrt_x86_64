@@ -20,7 +20,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       actions: write      
       contents: write
@@ -178,6 +178,7 @@ jobs:
       id: download
       run: |
         cd openwrt
+        rm -rf packages
         make download V=s -j$(nproc) FIXUP=1
         echo "Pre-downloading packages (this may take 5-10 minutes)..."
         
