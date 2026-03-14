@@ -109,6 +109,29 @@ jobs:
         ./scripts/feeds install -a 2>&1 | tail -20
         echo "✓ Feeds installed"
 
+    - name: Pre-place OpenClash Meta Core (x86_64)
+      run: |
+        # 1. 進入 OpenWrt 源碼根目錄 (Actions 預設已在其中)
+        # 2. 定義相對路徑 (絕對不能在開頭加 '/')
+        # 官方 feeds 安裝後，OpenClash 通常位於以下路徑
+        CORE_DIR="feeds/luci/applications/luci-app-openclash/root/etc/openclash/core"
+          
+        # 3. 強制創建編譯環境內的目錄
+        mkdir -p "$CORE_DIR"
+
+        # 4. 下載 x86_64 的 Meta 核心
+        CORE_URL=$(curl -sL https://api.github.com | grep "browser_download_url" | grep "linux-amd64-v" | grep ".gz" | head -n 1 | cut -d '"' -f 4)
+          
+        echo "Downloading Meta core to $CORE_DIR"
+        curl -sL "$CORE_URL" -o "$CORE_DIR/clash_meta.gz"
+          
+        # 5. 解壓並重命名，確保權限正確
+        gunzip -f "$CORE_DIR/clash_meta.gz"
+        chmod +x "$CORE_DIR/clash_meta"
+          
+        # 6. 檢查文件是否到位 (這會在 Log 中顯示，方便排錯)
+        ls -lh "$CORE_DIR"
+
     - name: Apply 25.12 Patches
       run: |
         cd openwrt
