@@ -109,27 +109,6 @@ jobs:
         ./scripts/feeds install -a 2>&1 | tail -20
         echo "✓ Feeds installed"
 
-    - name: Pre-place OpenClash Meta Core
-      run: |
-        # 自動尋找 OpenClash 路徑（防止手動輸入出錯）
-        OC_PATH=$(find feeds/ -name luci-app-openclash -type d | head -n 1)
-        CORE_DIR="$OC_PATH/root/etc/openclash/core"
-        mkdir -p "$CORE_DIR"
-
-        # 下載最新 Meta 核心
-        CORE_URL=$(curl -sL https://api.github.com | grep "browser_download_url" | grep "linux-amd64-v" | grep ".gz" | head -n 1 | cut -d '"' -f 4)
-          
-        if [ -z "$CORE_URL" ]; then
-          echo "Error: Failed to fetch Meta core URL"
-          exit 1
-        fi
-
-        curl -sL "$CORE_URL" -o "$CORE_DIR/clash_meta.gz"
-        gunzip -f "$CORE_DIR/clash_meta.gz"
-        chmod +x "$CORE_DIR/clash_meta"
-          
-        echo "Meta core pre-placed at $CORE_DIR"
-
     - name: Apply 25.12 Patches
       run: |
         cd openwrt
