@@ -109,6 +109,22 @@ jobs:
         ./scripts/feeds install -a 2>&1 | tail -20
         echo "✓ Feeds installed"
 
+    - name: Pre-place OpenClash Meta Core (x86_64)
+      run: |
+        # 定位 OpenClash 插件目錄（官方 feeds 編譯通常在 feeds/luci/...）
+        CORE_DIR="feeds/luci/applications/luci-app-openclash/root/etc/openclash/core"
+        mkdir -p $CORE_DIR
+
+        # 獲取最新 Mihomo (Meta) amd64 (x86_64) 版本下載地址
+        CORE_URL=$(curl -sL https://api.github.com | grep "browser_download_url" | grep "linux-amd64-v" | grep ".gz" | head -n 1 | cut -d '"' -f 4)
+          
+        # 下載、解壓、重新命名並賦予執行權限
+        curl -sL "$CORE_URL" -o "$CORE_DIR/clash_meta.gz"
+        gunzip "$CORE_DIR/clash_meta.gz"
+        chmod +x "$CORE_DIR/clash_meta"
+          
+        echo "Success: Meta core placed at $CORE_DIR/clash_meta"
+
     - name: Apply 25.12 Patches
       run: |
         cd openwrt
