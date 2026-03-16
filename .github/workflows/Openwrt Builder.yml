@@ -251,7 +251,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload Firmware
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
