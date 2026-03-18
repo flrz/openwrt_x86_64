@@ -159,25 +159,38 @@ jobs:
         cd openwrt
         [ -f "$GITHUB_WORKSPACE/$DIY_P2_SH" ] && $GITHUB_WORKSPACE/$DIY_P2_SH || echo "✓ No DIY_P2_SH script found"
 
-    - name: Download OpenClash Meta Core
+   - name: Download OpenClash Meta Core
       run: |
-        mkdir -p openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core/
-        # 使用特定的靜態地址，減少 API 請求
-        CORE_URL="https://raw.githubusercontent.com"
-        
-        # 嘗試多次下載
-        for i in {1..3}; do
-          wget -t 5 -T 15 -O /tmp/core.tar.gz "$CORE_URL" && break || sleep 5
-        done
-        
-        if [ -f /tmp/core.tar.gz ]; then
-          tar -zxf /tmp/core.tar.gz -C /tmp/
-          mv /tmp/clash_meta openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core/clash_meta
-          chmod +x openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core/clash_meta
-          echo "✅ Meta 內核預置成功"
+        # 1. 確保目錄存在 (使用絕對路徑防止出錯)
+        CORE_DIR="openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core"
+        mkdir -p $CORE_DIR
+
+        # 2. 定義 Mihomo Meta 內核下載地址 (直接指向 GitHub Release 二進制文件)
+        # 這裡以 v1.18.0 為例，這是目前最穩定的版本之一
+        # 如果是 x86_64 請用 amd64；如果是 ARM64 請用 arm64
+        CORE_URL="https://github.com"
+
+        echo "正在下載 Meta 內核..."
+        # 使用 -L 參數跟隨重定向，--retry 自動重試
+        curl -t 5 -fL -o /tmp/clash_meta.gz "$CORE_URL"
+
+        # 3. 檢查下載是否成功並解壓
+        if [ -f /tmp/clash_meta.gz ]; then
+            # 檢查文件頭部是否為 gzip 格式
+            if file /tmp/clash_meta.gz | grep -q "gzip compressed data"; then
+                gzip -d /tmp/clash_meta.gz
+                mv /tmp/clash_meta "$CORE_DIR/clash_meta"
+                chmod +x "$CORE_DIR/clash_meta"
+                echo "✅ Meta 內核已成功預置到: $CORE_DIR/clash_meta"
+                ls -lh "$CORE_DIR/clash_meta"
+            else
+                echo "❌ 下載的文件不是有效的 gzip 格式，可能是下載到了 HTML 報錯頁面"
+                exit 1
+            fi
         else
-          echo "❌ 內核下載失敗，但編譯將繼續"
-        fi       
+            echo "❌ 內核文件下載失敗"
+            exit 1
+        fi     
 
     - name: Apply Defconfig (Non-interactive)
       run: |
