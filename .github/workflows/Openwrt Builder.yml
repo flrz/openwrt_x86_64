@@ -161,36 +161,38 @@ jobs:
 
     - name: Download OpenClash Meta Core
       run: |
-        # 1. 確保目錄存在 (使用絕對路徑防止出錯)
         CORE_DIR="openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core"
         mkdir -p $CORE_DIR
-
-        # 2. 定義 Mihomo Meta 內核下載地址 (直接指向 GitHub Release 二進制文件)
-        # 這裡以 v1.18.0 為例，這是目前最穩定的版本之一
-        # 如果是 x86_64 請用 amd64；如果是 ARM64 請用 arm64
-        CORE_URL="https://github.com"
-
-        echo "正在下載 Meta 內核..."
-        # 使用 -L 參數跟隨重定向，--retry 自動重試
-        curl -t 5 -fL -o /tmp/clash_meta.gz "$CORE_URL"
-
-        # 3. 檢查下載是否成功並解壓
-        if [ -f /tmp/clash_meta.gz ]; then
-            # 檢查文件頭部是否為 gzip 格式
-            if file /tmp/clash_meta.gz | grep -q "gzip compressed data"; then
-                gzip -d /tmp/clash_meta.gz
-                mv /tmp/clash_meta "$CORE_DIR/clash_meta"
+        
+        # 方案 A: 從 OpenClash 官方 Core 倉庫下載 (已解壓的二進制)
+        # 這是最穩定的渠道，且不經過 GitHub Release 的跳轉
+        CORE_URL="https://raw.githubusercontent.com"
+        
+        echo "正在從 OpenClash 倉庫下載 Meta 內核..."
+        # 使用 -L 跟隨重定向，--connect-timeout 防止卡死
+        curl -L -t 5 --connect-timeout 20 -o /tmp/meta.tar.gz "$CORE_URL"
+        
+        # 檢查下載的文件是否為正常的壓縮包 (OpenClash 官方這個是 tar.gz)
+        if tar -ztf /tmp/meta.tar.gz >/dev/null 2>&1; then
+            tar -zxf /tmp/meta.tar.gz -C /tmp/
+            mv /tmp/clash_meta "$CORE_DIR/clash_meta"
+            chmod +x "$CORE_DIR/clash_meta"
+            echo "✅ Meta 內核集成成功 (渠道 A)"
+        else
+            echo "⚠️ 渠道 A 失敗，嘗試渠道 B (直接下載二進制)..."
+            # 方案 B: 直接下載 Mihomo 官方編譯好的二進制 (不帶版本號的直連)
+            CORE_URL_B="https://testingcf.jsdelivr.net"
+            curl -L -o /tmp/meta_b.gz "$CORE_URL_B"
+            if gzip -t /tmp/meta_b.gz >/dev/null 2>&1; then
+                gzip -d /tmp/meta_b.gz
+                mv /tmp/meta_b "$CORE_DIR/clash_meta"
                 chmod +x "$CORE_DIR/clash_meta"
-                echo "✅ Meta 內核已成功預置到: $CORE_DIR/clash_meta"
-                ls -lh "$CORE_DIR/clash_meta"
+                echo "✅ Meta 內核集成成功 (渠道 B)"
             else
-                echo "❌ 下載的文件不是有效的 gzip 格式，可能是下載到了 HTML 報錯頁面"
+                echo "❌ 所有下載渠道均失敗，建議手動將內核放入倉庫的 files 目錄"
                 exit 1
             fi
-        else
-            echo "❌ 內核文件下載失敗"
-            exit 1
-        fi     
+        fi  
 
     - name: Apply Defconfig (Non-interactive)
       run: |
