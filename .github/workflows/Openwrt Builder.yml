@@ -159,6 +159,26 @@ jobs:
         cd openwrt
         [ -f "$GITHUB_WORKSPACE/$DIY_P2_SH" ] && $GITHUB_WORKSPACE/$DIY_P2_SH || echo "✓ No DIY_P2_SH script found"
 
+    - name: Download OpenClash Meta Core
+      run: |
+        mkdir -p openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core/
+        # 使用特定的靜態地址，減少 API 請求
+        CORE_URL="https://raw.githubusercontent.com"
+        
+        # 嘗試多次下載
+        for i in {1..3}; do
+          wget -t 5 -T 15 -O /tmp/core.tar.gz "$CORE_URL" && break || sleep 5
+        done
+        
+        if [ -f /tmp/core.tar.gz ]; then
+          tar -zxf /tmp/core.tar.gz -C /tmp/
+          mv /tmp/clash_meta openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core/clash_meta
+          chmod +x openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core/clash_meta
+          echo "✅ Meta 內核預置成功"
+        else
+          echo "❌ 內核下載失敗，但編譯將繼續"
+        fi       
+
     - name: Apply Defconfig (Non-interactive)
       run: |
         cd openwrt
