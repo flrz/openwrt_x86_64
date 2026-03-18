@@ -159,41 +159,6 @@ jobs:
         cd openwrt
         [ -f "$GITHUB_WORKSPACE/$DIY_P2_SH" ] && $GITHUB_WORKSPACE/$DIY_P2_SH || echo "✓ No DIY_P2_SH script found"
 
-    - name: Download OpenClash Meta Core
-      run: |
-        CORE_DIR="openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core"
-        mkdir -p $CORE_DIR
-        
-        # 方案 A: 從 OpenClash 官方 Core 倉庫下載 (已解壓的二進制)
-        # 這是最穩定的渠道，且不經過 GitHub Release 的跳轉
-        CORE_URL="https://raw.githubusercontent.com"
-        
-        echo "正在從 OpenClash 倉庫下載 Meta 內核..."
-        # 使用 -L 跟隨重定向，--connect-timeout 防止卡死
-        curl -L -t 5 --connect-timeout 20 -o /tmp/meta.tar.gz "$CORE_URL"
-        
-        # 檢查下載的文件是否為正常的壓縮包 (OpenClash 官方這個是 tar.gz)
-        if tar -ztf /tmp/meta.tar.gz >/dev/null 2>&1; then
-            tar -zxf /tmp/meta.tar.gz -C /tmp/
-            mv /tmp/clash_meta "$CORE_DIR/clash_meta"
-            chmod +x "$CORE_DIR/clash_meta"
-            echo "✅ Meta 內核集成成功 (渠道 A)"
-        else
-            echo "⚠️ 渠道 A 失敗，嘗試渠道 B (直接下載二進制)..."
-            # 方案 B: 直接下載 Mihomo 官方編譯好的二進制 (不帶版本號的直連)
-            CORE_URL_B="https://testingcf.jsdelivr.net"
-            curl -L -o /tmp/meta_b.gz "$CORE_URL_B"
-            if gzip -t /tmp/meta_b.gz >/dev/null 2>&1; then
-                gzip -d /tmp/meta_b.gz
-                mv /tmp/meta_b "$CORE_DIR/clash_meta"
-                chmod +x "$CORE_DIR/clash_meta"
-                echo "✅ Meta 內核集成成功 (渠道 B)"
-            else
-                echo "❌ 所有下載渠道均失敗，建議手動將內核放入倉庫的 files 目錄"
-                exit 1
-            fi
-        fi  
-
     - name: Apply Defconfig (Non-interactive)
       run: |
         cd openwrt
