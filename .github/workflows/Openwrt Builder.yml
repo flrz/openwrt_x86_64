@@ -111,7 +111,7 @@ jobs:
         mkdir -p "$CORE_DIR"
         curl -L --retry 5 --connect-timeout 30 \
         -o "$CORE_DIR/clash_meta.gz" \
-        https://github.com/MetaCubeX/mihomo/releases/download/$VERSION/mihomo-linux-amd64-compatible.gz
+        https://github.com/MetaCubeX/mihomo/releases/$VERSION/mihomo-linux-amd64-compatible.gz
         gunzip -f "$CORE_DIR/clash_meta.gz"
         chmod +x "$CORE_DIR/clash_meta"
 
