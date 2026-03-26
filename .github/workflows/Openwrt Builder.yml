@@ -108,10 +108,12 @@ jobs:
       run: |
         CORE_DIR="openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core"
         VERSION=v1.19.21
-        mkdir -p $CORE_DIR
-        wget -qO $CORE_DIR/clash_meta \
-        https://github.com/MetaCubeX/mihomo/releases/download/$VERSION/mihomo-linux-amd64-compatible
-        chmod +x $CORE_DIR/clash_meta
+        mkdir -p "$CORE_DIR"
+        curl -L --retry 5 --connect-timeout 30 \
+        -o "$CORE_DIR/clash_meta.gz" \
+        https://github.com/MetaCubeX/mihomo/releases/download/$VERSION/mihomo-linux-amd64-compatible.gz
+        gunzip -f "$CORE_DIR/clash_meta.gz"
+        chmod +x "$CORE_DIR/clash_meta"
 
     - name: Update Feeds
       run: |
