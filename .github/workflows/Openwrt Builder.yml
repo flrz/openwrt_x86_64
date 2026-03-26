@@ -109,9 +109,9 @@ jobs:
         CORE_DIR="openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core"
         VERSION=v1.19.21
         mkdir -p $CORE_DIR
-        wget -qO /etc/openclash/core/clash_meta \
-        https://github.com/MetaCubeX/mihomo/releases/download/v1.19.21/mihomo-linux-amd64-compatible
-        chmod +x /etc/openclash/core/clash_meta
+        wget -qO $CORE_DIR/clash_meta \
+        https://github.com/MetaCubeX/mihomo/releases/download/$VERSION/mihomo-linux-amd64-compatible
+        chmod +x $CORE_DIR/clash_meta
 
     - name: Update Feeds
       run: |
