@@ -104,16 +104,25 @@ jobs:
         cd openwrt
         [ -f "$GITHUB_WORKSPACE/$DIY_P1_SH" ] && $GITHUB_WORKSPACE/$DIY_P1_SH || echo "✓ No DIY_P1_SH script found"
 
-    - name: Add OpenClash Core
+    - name: Download Mihomo Core
       run: |
         CORE_DIR="openwrt/package/feeds/openclash/luci-app-openclash/root/etc/openclash/core"
-        VERSION=v1.19.21
         mkdir -p "$CORE_DIR"
-        curl -L --retry 5 --connect-timeout 30 \
-        -o "$CORE_DIR/clash_meta.gz" \
-        https://github.com/MetaCubeX/mihomo/releases/download/v1.19.21/mihomo-linux-amd64-compatible.gz
-        gunzip -f "$CORE_DIR/clash_meta.gz"
+        # 明确指定版本号和架构 (x86_64 对应 amd64)
+        VERSION="v1.19.21"
+        FILENAME="mihomo-linux-amd64-${VERSION}.gz"
+        URL="https://github.com{VERSION}/${FILENAME}"
+        # 使用 -L 跟踪重定向，--fail 确保 404 时直接报错停止
+        curl -fL "$URL" -o "$CORE_DIR/clash_meta.gz"
+        # 解压并重命名为 OpenClash 识别的内核文件名
+        # 注意：OpenClash 默认内核名通常是 clash_meta，请确保与你的配置一致
+        gunzip -c "$CORE_DIR/clash_meta.gz" > "$CORE_DIR/clash_meta"
+        # 赋予执行权限并清理压缩包
         chmod +x "$CORE_DIR/clash_meta"
+        rm "$CORE_DIR/clash_meta.gz"
+        # 打印文件信息确认下载成功
+        ls -lh "$CORE_DIR"
+        file "$CORE_DIR/clash_meta"
 
     - name: Update Feeds
       run: |
