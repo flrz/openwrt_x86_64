@@ -1,0 +1,170 @@
+# ========================================
+# OpenWrt 25.12 x86_64 Full 配置（精简 + nftables 强化版）
+# 核心：Passwall + Sing-box + OpenClash + banIP + SmartDNS + Argon
+# ========================================
+
+# ======================
+# 目标平台
+# ======================
+CONFIG_TARGET_x86=y
+CONFIG_TARGET_x86_64=y
+CONFIG_TARGET_x86_64_DEVICE_generic=y
+
+# ======================
+# 全局构建选项
+# ======================
+CONFIG_ALL_KMODS=y
+CONFIG_ALL_NONSHARED=y
+CONFIG_AUTOREMOVE=y
+CONFIG_IMAGEOPT=y
+CONFIG_BUILDBOT=y
+
+# ======================
+# LuCI 与界面
+# ======================
+CONFIG_LUCI_LANG_zh_Hans=y
+CONFIG_PACKAGE_luci-theme-argon=y
+
+CONFIG_PACKAGE_luci=y
+CONFIG_PACKAGE_luci-base=y
+CONFIG_PACKAGE_luci-compat=y
+CONFIG_PACKAGE_luci-mod-admin-full=y
+CONFIG_PACKAGE_luci-mod-network=y
+CONFIG_PACKAGE_luci-mod-status=y
+CONFIG_PACKAGE_luci-mod-system=y
+
+CONFIG_PACKAGE_luci-lib-base=y
+CONFIG_PACKAGE_luci-lib-ip=y
+CONFIG_PACKAGE_luci-lib-ipkg=y
+CONFIG_PACKAGE_luci-lib-jsonc=y
+CONFIG_PACKAGE_luci-lib-nixio=y
+
+# ======================
+# 核心 LuCI 应用
+# ======================
+CONFIG_PACKAGE_luci-app-banip=y
+CONFIG_PACKAGE_luci-app-firewall=y
+CONFIG_PACKAGE_luci-app-openclash=y
+CONFIG_PACKAGE_luci-app-passwall=y
+CONFIG_PACKAGE_luci-app-smartdns=y
+
+# Passwall 关键组件
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Geoview=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_SingBox=y
+CONFIG_PACKAGE_luci-app-passwall_INCLUDE_Xray=y
+CONFIG_PACKAGE_luci-app-passwall_Nftables_Transparent_Proxy=y
+
+# 中文语言包
+CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-banip-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-passwall-zh-cn=y
+CONFIG_PACKAGE_luci-i18n-smartdns-zh-cn=y
+
+# ======================
+# 网络与代理核心
+# ======================
+CONFIG_PACKAGE_banip=y
+CONFIG_PACKAGE_chinadns-ng=y
+CONFIG_PACKAGE_dnsmasq-full=y
+CONFIG_PACKAGE_dnsmasq_full_dhcp=y
+CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
+CONFIG_PACKAGE_dnsmasq_full_ipset=y
+
+CONFIG_PACKAGE_geoview=y
+CONFIG_PACKAGE_ip-full=y
+CONFIG_PACKAGE_ipset=y
+CONFIG_PACKAGE_sing-box=y
+CONFIG_PACKAGE_smartdns=y
+
+CONFIG_PACKAGE_shadowsocks-rust-sslocal=y
+CONFIG_PACKAGE_shadowsocks-rust-ssserver=y
+
+CONFIG_PACKAGE_xray-core=y
+CONFIG_PACKAGE_xray-plugin=y
+CONFIG_PACKAGE_v2ray-geoip=y
+CONFIG_PACKAGE_v2ray-geosite=y
+
+# ======================
+# 系统基础工具
+# ======================
+CONFIG_PACKAGE_bash=y
+CONFIG_PACKAGE_coreutils=y
+CONFIG_PACKAGE_coreutils-base64=y
+CONFIG_PACKAGE_curl=y
+CONFIG_PACKAGE_unzip=y
+CONFIG_PACKAGE_wget-ssl=y
+CONFIG_PACKAGE_openssh-sftp-server=y
+CONFIG_PACKAGE_resolveip=y
+CONFIG_PACKAGE_tcping=y
+CONFIG_PACKAGE_socat=y
+
+# ======================
+# 库与依赖
+# ======================
+CONFIG_PACKAGE_ca-certificates=y
+CONFIG_PACKAGE_libcurl=y
+CONFIG_PACKAGE_libopenssl=y
+CONFIG_PACKAGE_libopenssl-conf=y
+CONFIG_PACKAGE_libsodium=y
+CONFIG_PACKAGE_libpcre2=y
+CONFIG_PACKAGE_libsqlite3=y
+
+# ======================
+# OpenSSL 优化
+# ======================
+CONFIG_OPENSSL_OPTIMIZE_SPEED=y
+CONFIG_OPENSSL_WITH_ASM=y
+CONFIG_OPENSSL_WITH_CHACHA_POLY1305=y
+CONFIG_OPENSSL_WITH_TLS13=y
+CONFIG_OPENSSL_WITH_ERROR_MESSAGES=y
+
+# ======================
+# nftables 强化配置（新增重点区域）
+# ======================
+# nftables 核心与基础
+CONFIG_PACKAGE_kmod-nft-core=y
+CONFIG_PACKAGE_kmod-nft-nat=y
+CONFIG_PACKAGE_kmod-nft-offload=y          # 硬件/软件流量卸载，提升性能
+CONFIG_PACKAGE_kmod-nft-socket=y           # socket 匹配（Passwall tproxy 常用）
+CONFIG_PACKAGE_kmod-nft-tproxy=y           # tproxy 支持（透明代理关键）
+CONFIG_PACKAGE_kmod-nft-fib=y              # fib 查找（路由决策优化）
+CONFIG_PACKAGE_kmod-nft-compat=y           # iptables 兼容层（防止冲突）
+
+# 网络过滤与 NAT 相关（nftables 时代推荐）
+CONFIG_PACKAGE_kmod-nf-conntrack-netlink=y
+CONFIG_PACKAGE_kmod-nf-nat6=y
+CONFIG_PACKAGE_kmod-nfnetlink=y
+
+# 基础 iptables 兼容（推荐保留少量）
+CONFIG_PACKAGE_kmod-ipt-core=y
+CONFIG_PACKAGE_kmod-ipt-conntrack=y
+CONFIG_PACKAGE_kmod-ipt-nat=y
+CONFIG_PACKAGE_kmod-ipt-offload=y
+
+# ======================
+# Sing-box 编译选项
+# ======================
+CONFIG_SING_BOX_BUILD_ACME=y
+CONFIG_SING_BOX_BUILD_CLASH_API=y
+CONFIG_SING_BOX_BUILD_GVISOR=y
+CONFIG_SING_BOX_BUILD_QUIC=y
+CONFIG_SING_BOX_BUILD_WIREGUARD=y
+
+# ======================
+# 存储分区
+# ======================
+CONFIG_TARGET_KERNEL_PARTSIZE=256
+CONFIG_TARGET_ROOTFS_PARTSIZE=1024
+# CONFIG_TARGET_ROOTFS_EXT4FS is not set
+
+# ======================
+# 其他必要系统包
+# ======================
+CONFIG_PACKAGE_firewall=m
+CONFIG_PACKAGE_uhttpd=y
+CONFIG_PACKAGE_uhttpd-mod-ubus=y
+CONFIG_PACKAGE_rpcd=y
+CONFIG_PACKAGE_rpcd-mod-luci=y
+CONFIG_PACKAGE_libuci-lua=y
+CONFIG_PACKAGE_libubus-lua=y
