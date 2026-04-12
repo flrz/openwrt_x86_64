@@ -1,86 +1,133 @@
-name: OpenWrt Builder (Docker)
+name: OpenWrt 25.12 Builder (Docker + Release)
 
 on:
-  workflow_dispatch:      # 手动触发
-  repository_dispatch:
+  workflow_dispatch:
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: openwrt-25.12
   TZ: Asia/Shanghai
-  CCACHE_SIZE: 4G
+  UPLOAD_RELEASE: true   # 控制是否创建 Release
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      actions: write
+      contents: write     # 必须添加，用于创建 Release 和上传文件
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Maximize Runner Space
-        uses: easimon/maximize-build-space@v10   # 可选，释放更多空间
+      - name: Free Disk Space
+        uses: easimon/maximize-build-space@v10
         with:
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
 
-      - name: Build OpenWrt in Docker
+      - name: Build OpenWrt with Go/Rust Patches
+        id: build
         run: |
-          docker run --rm -v "$(pwd)":/workspace \
+          docker run --rm --privileged \
+            -v "$(pwd)":/workspace \
             -e REPO_URL=${{ env.REPO_URL }} \
             -e REPO_BRANCH=${{ env.REPO_BRANCH }} \
             -e TZ=${{ env.TZ }} \
-            -e CCACHE_SIZE=${{ env.CCACHE_SIZE }} \
-            ghcr.io/openwrt/docker/buildroot:latest \
+            sulinggg/openwrtenv:latest \
             bash -c '
               set -e
               cd /workspace
-              
-              # 如果需要自定义 feeds 或 diy 脚本，可以在这里执行
+              echo "=== OpenWrt 25.12 Build Start ==="
+
               [ -f diy-part1.sh ] && chmod +x diy-part1.sh && ./diy-part1.sh || true
-              
+
               git clone --depth=1 -b $REPO_BRANCH $REPO_URL openwrt
               cd openwrt
-              
+
               [ -f ../feeds.conf.default ] && cp ../feeds.conf.default . || true
               [ -f ../.config ] && cp ../.config . || true
-              
+
               ./scripts/feeds update -a
               ./scripts/feeds install -a
-              
+
+              # === Golang + Rust 补丁 ===
+              echo "Applying golang & rust patches..."
+              rm -rf /tmp/packages 2>/dev/null || true
+              git clone --depth=1 -b master --single-branch https://github.com/openwrt/packages.git /tmp/packages
+
+              for lang in golang rust; do
+                if [ -d "/tmp/packages/lang/$lang" ]; then
+                  rm -rf feeds/packages/lang/$lang
+                  cp -r /tmp/packages/lang/$lang feeds/packages/lang/
+                  echo "✓ Updated $lang from master"
+                fi
+              done
+              rm -rf /tmp/packages
+
+              if [ -f "feeds/packages/lang/rust/Makefile" ]; then
+                sed -i "s/--set=llvm.download-ci-llvm=true/--set=llvm.download-ci-llvm=false/" feeds/packages/lang/rust/Makefile || true
+                sed -i "/x\.py \\/a \ \ --ci false \\" feeds/packages/lang/rust/Makefile || true
+                echo "✓ Applied rust build flags patch"
+              fi
+
+              ./scripts/feeds update -a
+              ./scripts/feeds install -a
+
               [ -f ../diy-part2.sh ] && chmod +x ../diy-part2.sh && ../diy-part2.sh || true
-              
+
               make defconfig
-              
-              # 可选：预下载（加速后续编译）
-              make download -j$(nproc) || true
-              
-              # 编译（推荐先用 -j1 测试，正式用多线程）
-              make -j$(nproc) || make -j1 V=s
-              
-              # 整理输出
+
+              echo "Downloading packages..."
+              make download -j4 || true
+
+              echo "Compiling firmware..."
+              make -j$(nproc) || make -j2 V=s
+
+              # 整理固件
               mkdir -p /workspace/firmware
               cp -r bin/targets/*/* /workspace/firmware/ 2>/dev/null || true
-              echo "Build completed. Firmware in /workspace/firmware"
+              echo "Build completed!"
+              ls -lh /workspace/firmware/
             '
 
-      - name: Upload Firmware
+      - name: Upload Firmware Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OpenWrt-25.12-firmware
+          name: OpenWrt-25.12_firmware
           path: ./firmware/
           retention-days: 7
-          compression-level: 6
 
-      - name: Cleanup Old Releases (可选)
-        if: env.UPLOAD_RELEASE == 'true'
-        uses: dev-drprasad/delete-older-releases@master
+      - name: Generate Release Tag and Notes
+        if: env.UPLOAD_RELEASE == 'true' && success()
+        id: release
+        run: |
+          TAG=$(date +"%Y.%m.%d-%H%M")
+          echo "release_tag=$TAG" >> $GITHUB_OUTPUT
+          echo "release_name=OpenWrt 25.12 - $TAG" >> $GITHUB_OUTPUT
+
+          cat > release_notes.md << EOF
+          # OpenWrt 25.12 Custom Build
+
+          **Build Date:** $(date '+%Y-%m-%d %H:%M:%S %Z')
+          **Branch:** ${{ env.REPO_BRANCH }}
+          **Commit:** $(cd openwrt && git rev-parse --short HEAD)
+
+          ### Golang & Rust 补丁已应用
+
+          固件文件请在下方 **Assets** 中下载。
+          EOF
+
+      - name: Create GitHub Release
+        if: env.UPLOAD_RELEASE == 'true' && success()
+        uses: softprops/action-gh-release@v2
         with:
-          keep_latest: 3
-          delete_tags: true
+          tag_name: ${{ steps.release.outputs.release_tag }}
+          name: ${{ steps.release.outputs.release_name }}
+          body_path: release_notes.md
+          files: |
+            ./firmware/*
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
