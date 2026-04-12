@@ -7,34 +7,33 @@ env:
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: openwrt-25.12
   TZ: Asia/Shanghai
-  UPLOAD_RELEASE: true   # 控制是否创建 Release
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write     # 必须添加，用于创建 Release 和上传文件
+      contents: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Free Disk Space
-        uses: easimon/maximize-build-space@v10
-        with:
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
+      - name: Free Up Disk Space (Critical)
+        run: |
+          echo "Before cleanup: $(df -h /)"
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          sudo docker system prune -a -f --volumes
+          sudo apt-get clean
+          echo "After cleanup: $(df -h /)"
 
       - name: Build OpenWrt with Go/Rust Patches
-        id: build
         run: |
           docker run --rm --privileged \
             -v "$(pwd)":/workspace \
             -e REPO_URL=${{ env.REPO_URL }} \
             -e REPO_BRANCH=${{ env.REPO_BRANCH }} \
             -e TZ=${{ env.TZ }} \
-            sulinggg/openwrtenv:latest \
+            p3terx/openwrt-build-env:latest \
             bash -c '
               set -e
               cd /workspace
@@ -52,7 +51,7 @@ jobs:
               ./scripts/feeds install -a
 
               # === Golang + Rust 补丁 ===
-              echo "Applying golang & rust patches..."
+              echo "Applying golang & rust patches from master..."
               rm -rf /tmp/packages 2>/dev/null || true
               git clone --depth=1 -b master --single-branch https://github.com/openwrt/packages.git /tmp/packages
 
@@ -79,10 +78,10 @@ jobs:
               make defconfig
 
               echo "Downloading packages..."
-              make download -j4 || true
+              make download -j2 || true
 
-              echo "Compiling firmware..."
-              make -j$(nproc) || make -j2 V=s
+              echo "Compiling firmware... (using 2 threads for stability)"
+              make -j2 V=s || make -j1 V=s
 
               # 整理固件
               mkdir -p /workspace/firmware
@@ -98,33 +97,16 @@ jobs:
           path: ./firmware/
           retention-days: 7
 
-      - name: Generate Release Tag and Notes
-        if: env.UPLOAD_RELEASE == 'true' && success()
-        id: release
-        run: |
-          TAG=$(date +"%Y.%m.%d-%H%M")
-          echo "release_tag=$TAG" >> $GITHUB_OUTPUT
-          echo "release_name=OpenWrt 25.12 - $TAG" >> $GITHUB_OUTPUT
-
-          cat > release_notes.md << EOF
-          # OpenWrt 25.12 Custom Build
-
-          **Build Date:** $(date '+%Y-%m-%d %H:%M:%S %Z')
-          **Branch:** ${{ env.REPO_BRANCH }}
-          **Commit:** $(cd openwrt && git rev-parse --short HEAD)
-
-          ### Golang & Rust 补丁已应用
-
-          固件文件请在下方 **Assets** 中下载。
-          EOF
-
       - name: Create GitHub Release
-        if: env.UPLOAD_RELEASE == 'true' && success()
+        if: success()
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.release.outputs.release_tag }}
-          name: ${{ steps.release.outputs.release_name }}
-          body_path: release_notes.md
+          tag_name: ${{ format('25.12-{0}', github.run_number) }}   # 或使用日期: $(date +"%Y.%m.%d")
+          name: OpenWrt 25.12 Custom Build
+          body: |
+            **Build Date:** $(date '+%Y-%m-%d %H:%M:%S %Z')
+            **Branch:** openwrt-25.12
+            **Note:** Golang & Rust patches applied from master branch.
           files: |
             ./firmware/*
           draft: false
