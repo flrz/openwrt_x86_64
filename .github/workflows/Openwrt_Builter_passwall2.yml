@@ -1,4 +1,4 @@
-name: OpenWrt Builder1
+name: OpenWrt Builder with passwall2
 
 on:
   repository_dispatch:
