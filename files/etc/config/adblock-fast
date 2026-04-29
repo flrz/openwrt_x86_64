@@ -1,6 +1,0 @@
-config adblock-fast 'config'
-    option adblock_enabled '1'
-    # 这一行指定了 StevenBlack 的统一 Hosts 地址
-    list adblock_src 'https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts'
-    # 这里的路径是你刚才在 crontabs 里定义的输出/更新脚本位置
-    option adblock_rt_file '/tmp/adblock-fast.cache'
