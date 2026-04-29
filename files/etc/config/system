@@ -1,5 +1,5 @@
 config system
-    option hostname 'OpenWrt@'          # 可自行修改主机名
+    option hostname 'OpenWrt'          # 可自行修改主机名
     option zonename 'Asia/Shanghai'
     option timezone 'CST-8'
 
