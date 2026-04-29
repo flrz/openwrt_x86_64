@@ -1,2 +1,0 @@
-0 12 * * * /etc/init.d/adblock-fast dl # adblock-fast-auto
-[这里留一个空行]
