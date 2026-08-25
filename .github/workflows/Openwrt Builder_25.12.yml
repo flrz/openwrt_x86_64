@@ -102,27 +102,32 @@ jobs:
         ./scripts/feeds install -a
         echo "Patch application completed"
 
-    - name: Force Upgrade Go Compiler to 1.27
+    - name: Setup Official Go 1.27
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.27.0'
+        cache: false # 關閉快取，避免殘留舊版依賴干擾
+
+    - name: Link Host Go and Force OpenWrt Go Makefile to 1.27
       run: |
         cd openwrt
         
-        # 1. 安裝主機端（Host）的 Go 1.27 
-        echo "=== 安裝主機端 Go 1.27 ==="
-        curl -L https://go.dev -o go1.27.tar.gz
-        sudo rm -rf /usr/local/go
-        sudo tar -C /usr/local -xzf go1.27.tar.gz
-        rm go1.27.tar.gz
-        export PATH=$PATH:/usr/local/go
+        # 1. 驗證主機端 Go 是否成功切換為 1.27
+        echo "=== 檢查 GitHub 主機端 Go 版本 ==="
         go version
+        
+        # 2. 將新版 Go 的路徑覆蓋到系統全域，確保 OpenWrt 主機工具鏈（Host-build）優先調用
+        sudo ln -sf $(which go) /usr/bin/go
+        sudo ln -sf $(which gofmt) /usr/bin/gofmt
 
-        # 2. 強制修改 OpenWrt 的 golang 套件定義
+        # 3. 強制修改 OpenWrt 的 golang 套件定義 (Target 端的編譯版本)
         echo "=== 修改 OpenWrt 原始碼中的 Go 版本定義 ==="
         GOLANG_MAKEFILE="feeds/packages/lang/golang/Makefile"
         
         if [ -f "$GOLANG_MAKEFILE" ]; then
           # 替換基礎版本號為 1.27.0
           sed -i 's/GO_VERSION:=.*/GO_VERSION:=1.27.0/' $GOLANG_MAKEFILE
-          # 清空原本的雜湊校驗碼（避免下載時報 Hash mismatch 錯誤）
+          # 繞過原本舊版本的雜湊校驗碼（避免下載新版原始碼時報 Hash mismatch 錯誤）
           sed -i 's/GO_HASH:=.*/GO_HASH:=skip/' $GOLANG_MAKEFILE
           
           echo "已成功將 OpenWrt Go Makefile 版本修改為 1.27.0"
@@ -131,10 +136,9 @@ jobs:
           exit 1
         fi
 
-        # 3. 刪除舊的 Go 編譯殘留，強制重新準備工具鏈
+        # 4. 強制清空舊的 Go 編譯殘留快取
         rm -rf build_dir/host/go-*
         rm -rf build_dir/target-*/go-*
-
 
     - name: Download Clash Meta Core (预置到固件)
       working-directory: openwrt
