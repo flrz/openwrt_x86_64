@@ -78,6 +78,20 @@ jobs:
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
+        
+    - name: Download Clash Meta Core (预置到固件)
+      working-directory: openwrt
+      run: |
+        mkdir -p files/etc/openclash/core
+
+        echo "Downloading Clash Meta core for amd64..."
+        # 优先使用 vernesong 维护的稳定核心
+        curl -L --retry 5 --retry-delay 3 \
+          -o /tmp/clash_meta.tar.gz \
+          "https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-amd64.tar.gz" || \
+        curl -L --retry 5 --retry-delay 3 \
+          -o /tmp/clash_meta.tar.gz \
+          "https://github.com/vernesong/OpenClash/raw/core/master/meta/clash-linux-amd64.tar.gz"
 
     - name: Load custom configuration
       run: |
