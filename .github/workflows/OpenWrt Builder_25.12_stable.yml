@@ -79,30 +79,6 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
 
-        # --- Patch Golang & Rust versions ---
-        echo "Start applying patches..."
-        rm -rf temp_resp
-        git clone -b master --single-branch https://github.com/openwrt/packages.git temp_resp
-        echo "Updating golang version"
-        rm -rf feeds/packages/lang/golang
-        cp -r temp_resp/lang/golang feeds/packages/lang
-        echo "Updating rust version"
-        rm -rf feeds/packages/lang/rust
-        cp -r temp_resp/lang/rust feeds/packages/lang
-        rm -rf temp_resp
-
-        git clone -b main --single-branch https://github.com/openwrt/openwrt.git temp_resp
-        cp -f temp_resp/scripts/patch-kernel.sh scripts/
-        rm -rf temp_resp
-
-        echo "Fixing rust host build error"
-        sed -i 's/--set=llvm\.download-ci-llvm=false/--set=llvm.download-ci-llvm=true/' feeds/packages/lang/rust/Makefile
-        grep -q -- '--ci false \\' feeds/packages/lang/rust/Makefile || sed -i '/x\.py \\/a \        --ci false \\' feeds/packages/lang/rust/Makefile
-
-        ./scripts/feeds update -a
-        ./scripts/feeds install -a
-        echo "Patch application completed"
-
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
@@ -124,7 +100,7 @@ jobs:
       id: compile
       run: |
         cd openwrt
-        export GOPROXY=https://proxy.golang.org,direct
+        #export GOPROXY=https://proxy.golang.org,direct
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
