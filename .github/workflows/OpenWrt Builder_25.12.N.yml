@@ -1,5 +1,5 @@
 
-name: Openwrt Builder_25.12 with openclash #stable release
+name: Openwrt Builder_25.12 stable
 
 on:
   repository_dispatch:
