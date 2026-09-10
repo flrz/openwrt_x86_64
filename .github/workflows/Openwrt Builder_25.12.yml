@@ -144,14 +144,41 @@ jobs:
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
+
+    - name: Setup Go environment
+      uses: actions/setup-go@v5
+      with:
+        go-version: 'stable' # 自动安装系统环境下的最新稳定版 Go
         
     - name: Compile the firmware
       id: compile
       run: |
         cd openwrt
         export GOPROXY=https://proxy.golang.org,direct
+        
+        # 验证全局环境已切换到最新版 Go
+        echo "=== Current Go Version ==="
+        go version
+        echo "=========================="
+        
+        # 限制 Go 编译器自身并发，防止吞干 GitHub 虚拟机的 7GB 内存触发 OOM
+        export GOMAXPROCS=2
+        export GOFLAGS="-p=2"
+        
         echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 || make -j1 V=s
+        
+        # 1. 尝试全局多线程编译
+        make -j$(nproc) || {
+          echo "WARNING: Global compile failed. Attempting to laser-focus repair xray-core..."
+          
+          # 2. 如果因为内存或网络短暂中断，【精准、定向】编译过时的或爆内存的 xray-core
+          # 使用 V=s 暴露日志，同时用稳定的 -j2 线程确保不超时且不爆内存
+          make package/feeds/passwall_packages/xray-core/compile V=s -j2
+          
+          # 3. 修复完 xray 后，重新放开跑完剩下其他不怎么吃内存的普通包
+          make -j$(nproc)
+        }
+        
         echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
